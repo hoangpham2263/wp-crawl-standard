@@ -52,7 +52,7 @@ f1 Lấy danh sách URL  →  f2 Tải HTML  →  f3 Trích dữ liệu  →  f4
 ## 2. Cấu trúc thư mục
 
 ```
-<ten-nguon>-<loai>-crawl/          # vd: chatuy-post-crawl, haravan-product-crawl
+<ten-nguon>-<loai>-crawl/          # vd: example-post-crawl, shop-product-crawl
 ├── main.py                 # menu chọn bước, "0 = chạy tất cả"
 ├── start                   # #!/bin/bash → python3 main.py (chmod +x)
 ├── config.example.json     # mẫu cấu hình, KHÔNG chứa mật khẩu thật
