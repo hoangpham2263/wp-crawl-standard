@@ -1,6 +1,8 @@
 # WP Crawl Standard — quy chuẩn dựng tool crawl → WordPress / WooCommerce
 
-Tài liệu này mô tả khung chung mà mọi tool trong thư mục `crawls/` đang dùng (đúc kết từ wp-post-chatuy-crawl, wp-product-crawler, haravan-product-crawl, các tool dethitracnghiem…), kèm những chỗ cần làm chuẩn hơn. Khi cần tool mới: **đưa file này cho AI/dev đọc, mô tả nguồn dữ liệu + đích, rồi dựng theo đúng khung dưới đây.**
+Quy chuẩn chung để dựng các tool **crawl dữ liệu → nhập vào WordPress / WooCommerce** (bài viết, sản phẩm, quiz…), đúc kết từ nhiều tool mình đã làm thực tế. Khi cần tool mới: **đưa file này cho AI/dev đọc, mô tả nguồn dữ liệu + đích, rồi dựng theo đúng khung bên dưới.**
+
+> *English summary: a standard for building Python crawl → WordPress/WooCommerce import tools — mandatory rules, a 13-step build process, folder layout, config and code templates, and a ready-to-use prompt for AI assistants.*
 
 ---
 
