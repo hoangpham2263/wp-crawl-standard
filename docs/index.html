@@ -51,6 +51,13 @@
       .md th, .md td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
       .md code:not(.hljs) { padding: 1px 5px; border-radius: 5px; background: var(--soft); font-size: 13px; }
       .md img { max-width: 100%; }
+      /* Light weights: headings 600, bold text 500, the rest normal */
+      h1 { font-weight: 600; }
+      .md h1, .md h2, .md h3, .md h4 { font-weight: 600; }
+      .md h1 { font-size: 24px; } .md h2 { font-size: 20px; } .md h3 { font-size: 17px; }
+      .md strong, .md b { font-weight: 500; }
+      .md th { font-weight: 500; }
+      .hljs-keyword, .hljs-title, .hljs-section, .hljs-strong, .hljs-selector-tag, .hljs-built_in, .hljs-type { font-weight: 400 !important; }
       .empty { padding: 24px; color: var(--muted); }
       footer { text-align: center; font-size: 13px; color: var(--muted); }
       .toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 12px); padding: 10px 16px; border-radius: 10px; background: #0f172a; color: #fff; font-size: 14px; box-shadow: 0 8px 24px rgba(15, 23, 42, .18); opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s; }
