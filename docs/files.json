@@ -1,0 +1,12 @@
+{
+ "title": "WP Crawl Standard",
+ "description": "Quy chuẩn dựng tool crawl dữ liệu → WordPress / WooCommerce",
+ "repo": "hoangpham2263/wp-crawl-standard",
+ "files": [
+  {
+   "path": "README.md",
+   "group": "",
+   "title": "Giới thiệu (README)"
+  }
+ ]
+}

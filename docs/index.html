@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HoangPham Docs</title>
+    <link rel="icon" href="brand/hp-favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" media="(prefers-color-scheme: light)" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css" media="(prefers-color-scheme: dark)" />
+    <style>
+      :root { --bg: #fff; --fg: #0f172a; --muted: #64748b; --border: #e2e8f0; --soft: #f1f5f9; --primary: #2563eb; color-scheme: light dark; }
+      @media (prefers-color-scheme: dark) { :root { --bg: #0b1120; --fg: #e2e8f0; --muted: #94a3b8; --border: #1e293b; --soft: #111827; --primary: #3b82f6; } }
+      * { box-sizing: border-box; }
+      [hidden] { display: none !important; }
+      body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      a { color: var(--primary); }
+      /* Container like Tailwind's */
+      .wrap { width: 100%; max-width: 1280px; margin: 0 auto; padding: 32px 16px 48px; display: grid; gap: 16px; }
+      @media (min-width: 640px) { .wrap { padding-left: 24px; padding-right: 24px; } }
+      @media (min-width: 1024px) { .wrap { padding-left: 32px; padding-right: 32px; } }
+      .top { display: flex; align-items: center; gap: 12px; }
+      .top-text { flex: 1; min-width: 0; }
+      h1 { margin: 0; font-size: 26px; line-height: 1.25; }
+      .desc { margin: 2px 0 0; font-size: 14px; color: var(--muted); }
+      .brand img { display: block; border-radius: 10px; }
+      .back, .gh { padding: 6px 10px; border-radius: 999px; font-size: 13px; text-decoration: none; white-space: nowrap; }
+      .back:hover, .gh:hover { background: var(--soft); }
+      .layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 16px; align-items: start; }
+      nav { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow: auto; border: 1px solid var(--border); border-radius: 14px; padding: 8px; font-size: 14px; }
+      nav .group { padding: 10px 8px 4px; font-size: 12px; color: var(--muted); }
+      nav a { display: block; padding: 6px 8px; border-radius: 8px; color: var(--fg); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      nav a:hover { background: var(--soft); }
+      nav a.on { background: var(--soft); color: var(--primary); }
+      nav a.sub { padding-left: 20px; font-size: 13px; color: var(--muted); }
+      .md h2 { scroll-margin-top: 16px; }
+      #search { width: 100%; height: 36px; padding: 0 10px; margin-bottom: 4px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); font: inherit; font-size: 14px; }
+      #search:focus { outline: none; border-color: var(--primary); }
+      main.view { min-width: 0; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+      .bar { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+      .bar .path { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 13px ui-monospace, Menlo, monospace; }
+      button, .btn { display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--fg); font: inherit; font-size: 14px; white-space: nowrap; text-decoration: none; cursor: pointer; }
+      button:hover, .btn:hover { background: var(--soft); }
+      .primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+      .primary:hover { background: var(--primary); filter: brightness(.92); }
+      pre { margin: 0; }
+      pre code.hljs { padding: 16px; font: 13px/1.55 ui-monospace, Menlo, monospace; background: transparent; }
+      .md { padding: 4px 24px 24px; }
+      .md pre { position: relative; border: 1px solid var(--border); border-radius: 10px; background: var(--soft); overflow: auto; }
+      .md pre .copy { position: absolute; top: 8px; right: 8px; height: 30px; padding: 0 10px; font-size: 13px; }
+      .md table { border-collapse: collapse; display: block; overflow: auto; }
+      .md th, .md td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+      .md code:not(.hljs) { padding: 1px 5px; border-radius: 5px; background: var(--soft); font-size: 13px; }
+      .md img { max-width: 100%; }
+      .empty { padding: 24px; color: var(--muted); }
+      footer { text-align: center; font-size: 13px; color: var(--muted); }
+      .toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 12px); padding: 10px 16px; border-radius: 10px; background: #0f172a; color: #fff; font-size: 14px; box-shadow: 0 8px 24px rgba(15, 23, 42, .18); opacity: 0; pointer-events: none; transition: opacity .18s, transform .18s; }
+      .toast.show { opacity: 1; transform: translate(-50%, 0); }
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: 1fr; }
+        nav { position: static; max-height: 320px; }
+        .md { padding: 4px 16px 16px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="top">
+        <a class="brand" href="https://hoangpham.is-a.dev" aria-label="HoangPham"><img src="brand/hp-icon.svg" alt="HoangPham" width="40" height="40" /></a>
+        <div class="top-text"><h1 id="title"></h1><p id="desc" class="desc"></p></div>
+        <a id="gh" class="gh" href="#" target="_blank" rel="noopener">GitHub</a>
+        <a class="back" href="https://hoangpham.is-a.dev/tools">← Portfolio</a>
+      </header>
+      <div class="layout">
+        <nav><input id="search" type="search" placeholder="Tìm file…" /><div id="list"></div></nav>
+        <main class="view">
+          <div class="bar"><span id="path" class="path"></span><button id="copy" class="primary" type="button">Sao chép</button><a id="raw" class="btn" target="_blank" rel="noopener">Xem gốc</a></div>
+          <div id="content"><p class="empty">Đang tải…</p></div>
+        </main>
+      </div>
+      <footer>Làm bởi <a href="https://hoangpham.is-a.dev" target="_blank" rel="noopener">Phạm Quốc Hoàng</a></footer>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+    <script>
+      // Code viewer for a GitHub repo: files.json lists the files, content comes from raw.githubusercontent.com.
+      (async () => {
+        const $ = (id) => document.getElementById(id);
+        const cfg = await (await fetch("files.json", { cache: "no-store" })).json();
+        const raw = (p) => `https://raw.githubusercontent.com/${cfg.repo}/main/${p.split("/").map(encodeURIComponent).join("/")}`;
+        const cache = new Map();
+        let current = "";
+        let toc = [];
+
+        document.title = `${cfg.title} – HoangPham`;
+        $("title").textContent = cfg.title;
+        $("desc").textContent = cfg.description || "";
+        $("gh").href = `https://github.com/${cfg.repo}`;
+
+        let timer;
+        const toast = (text) => {
+          let el = document.querySelector(".toast");
+          if (!el) { el = Object.assign(document.createElement("div"), { className: "toast", role: "status" }); document.body.append(el); }
+          el.textContent = text;
+          el.classList.add("show");
+          clearTimeout(timer);
+          timer = setTimeout(() => el.classList.remove("show"), 1800);
+        };
+        const copy = async (text) => {
+          try { await navigator.clipboard.writeText(text); toast("✓ Đã sao chép"); } catch { toast("Không sao chép được"); }
+        };
+
+        function renderList(filter = "") {
+          const q = filter.toLowerCase();
+          const items = cfg.files.filter((f) => !q || f.path.toLowerCase().includes(q) || (f.title || "").toLowerCase().includes(q));
+          const out = [];
+          let group = null;
+          for (const f of items) {
+            if (f.group !== group) { group = f.group; if (group) out.push(Object.assign(document.createElement("div"), { className: "group", textContent: group })); }
+            const a = Object.assign(document.createElement("a"), { href: `#${f.path}`, textContent: f.title || f.path.split("/").pop(), title: f.path });
+            a.classList.toggle("on", f.path === current);
+            out.push(a);
+            // Headings of the open Markdown file, for long READMEs
+            if (f.path === current) for (const h of toc) {
+              const t = Object.assign(document.createElement("a"), { href: "#", textContent: h.textContent, className: "sub" });
+              t.onclick = (e) => { e.preventDefault(); h.scrollIntoView({ behavior: "smooth", block: "start" }); };
+              out.push(t);
+            }
+          }
+          $("list").replaceChildren(...out);
+        }
+
+        async function show(path) {
+          const file = cfg.files.find((f) => f.path === path) || cfg.files[0];
+          current = file.path;
+          toc = [];
+          renderList($("search").value);
+          $("path").textContent = file.path;
+          $("raw").href = raw(file.path);
+          $("content").innerHTML = '<p class="empty">Đang tải…</p>';
+          if (!cache.has(file.path)) {
+            const r = await fetch(raw(file.path));
+            cache.set(file.path, r.ok ? await r.text() : null);
+          }
+          const text = cache.get(file.path);
+          if (current !== file.path) return;
+          $("copy").onclick = () => text != null && copy(text);
+          if (text == null) { $("content").innerHTML = '<p class="empty">Không tải được file.</p>'; return; }
+          if (/\.md$/i.test(file.path)) {
+            const div = Object.assign(document.createElement("div"), { className: "md" });
+            div.innerHTML = marked.parse(text);
+            div.querySelectorAll("pre code").forEach((c) => {
+              hljs.highlightElement(c);
+              const b = Object.assign(document.createElement("button"), { type: "button", className: "copy", textContent: "Sao chép" });
+              b.onclick = () => copy(c.textContent);
+              c.parentElement.append(b);
+            });
+            $("content").replaceChildren(div);
+            toc = [...div.querySelectorAll("h2")];
+            renderList($("search").value);
+          } else {
+            const ext = (file.path.match(/\.([a-z0-9]+)$/i) || [])[1] || "";
+            const lang = { php: "php", js: "javascript", css: "css", sh: "bash", yml: "yaml", json: "json", txt: "plaintext", text: "css" }[ext.toLowerCase()];
+            const code = Object.assign(document.createElement("code"), { textContent: text });
+            if (lang) code.className = `language-${lang}`;
+            hljs.highlightElement(code);
+            const pre = document.createElement("pre");
+            pre.append(code);
+            $("content").replaceChildren(pre);
+          }
+        }
+
+        $("search").oninput = () => renderList($("search").value);
+        addEventListener("hashchange", () => show(decodeURIComponent(location.hash.slice(1))));
+        show(decodeURIComponent(location.hash.slice(1)));
+      })();
+    </script>
+  </body>
+</html>
