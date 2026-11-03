@@ -1,123 +1,121 @@
-# WP Crawl Standard — quy chuẩn dựng tool crawl → WordPress / WooCommerce
+# WP Crawl Standard: a standard for building crawl → WordPress / WooCommerce tools
 
-Quy chuẩn chung để dựng các tool **crawl dữ liệu → nhập vào WordPress / WooCommerce** (bài viết, sản phẩm, quiz…), đúc kết từ nhiều tool mình đã làm thực tế. Khi cần tool mới: **đưa file này cho AI/dev đọc, mô tả nguồn dữ liệu + đích, rồi dựng theo đúng khung bên dưới.**
-
-> *English summary: a standard for building Python crawl → WordPress/WooCommerce import tools — mandatory rules, a 13-step build process, folder layout, config and code templates, and a ready-to-use prompt for AI assistants.*
+A shared standard for building tools that **crawl data and import it into WordPress / WooCommerce** (posts, products, quizzes and more), distilled from many tools built in practice. When a new tool is needed: **give this file to an AI or developer, describe the data source and target, then build it within the framework below.**
 
 ---
 
-## Quy tắc bắt buộc (tóm tắt)
+## Mandatory rules (summary)
 
-1. **Mỗi bước một file** `fN_<việc>.py`, có hàm `run() -> bool`; `main.py` chỉ là menu gọi các bước.
-2. **Bước sau đọc output của bước trước từ `data/`**, không gọi thẳng code của nhau.
-3. **Chạy lại không làm hỏng / không tạo trùng**: bỏ qua item đã xong; chống trùng bằng `slug` hoặc `sku`.
-4. **Cấu hình nằm trong `config.json`** (nguồn, selector, WordPress, tốc độ crawl); không viết cứng trong code.
-5. **Không commit mật khẩu và dữ liệu**: `config.json`, `data/`, file CSV/Excel nằm trong `.gitignore`; `config.example.json` để trống mật khẩu.
-6. **Chạy thử trước**: `test_limit = 5`, nhập bài ở trạng thái `draft`.
-7. **Crawl lịch sự**: nghỉ 1–3 giây giữa các request, tối đa 3 luồng, có retry, dừng khi bị chặn.
-8. **Lỗi không làm dừng cả pipeline**: item lỗi ghi vào `data/logs/`, chạy lại riêng sau.
-9. **Chỉ crawl dữ liệu có quyền dùng**; nguồn có API/feed thì dùng API.
-10. **Mỗi tool có README**: nguồn, đích, cách chạy, lưu ý quyền dữ liệu.
+1. **One file per step:** `fN_<task>.py` with a `run() -> bool` function; `main.py` is only a menu that calls the steps.
+2. **Each step reads the previous step's output from `data/`** and never calls its code directly.
+3. **Re-running never breaks anything or creates duplicates:** skip finished items; prevent duplicates using `slug` or `sku`.
+4. **Configuration lives in `config.json`** (source, selectors, WordPress, crawl speed), never hard-coded.
+5. **Never commit passwords or data:** `config.json`, `data/` and CSV/Excel files go in `.gitignore`; `config.example.json` keeps passwords empty.
+6. **Test first:** `test_limit = 5`, import posts as `draft`.
+7. **Crawl politely:** wait 1–3 seconds between requests, 3 workers at most, with retries, and stop when blocked.
+8. **Errors do not stop the pipeline:** failed items are logged to `data/logs/` and re-run separately later.
+9. **Crawl only data you have the right to use;** if the source has an API or feed, use it.
+10. **Every tool has a README:** source, target, how to run, data rights notes.
 
-## Quy trình dựng tool mới — từng bước
+## Building a new tool: step by step
 
-| Bước | Việc làm | Kết quả cần có |
+| Step | What to do | Expected result |
 |---|---|---|
-| **1. Khảo sát nguồn** | Mở site nguồn: có sitemap? có API trong tab Network? trang render bằng JS không? Kiểm tra `robots.txt`, quyền dùng dữ liệu | Biết lấy danh sách URL từ đâu, dùng `requests` hay Playwright |
-| **2. Xác định đích** | Đích là post, custom post type hay WooCommerce product? Cần chuyên mục, tag, ACF/meta nào? | Danh sách trường cần lấy (schema JSON mục 7) |
-| **3. Tạo khung** | Tạo thư mục theo mục 2: `main.py`, `start`, `common.py`, `config.example.json`, `.gitignore`, `requirements.txt`, `README.md` | Chạy `./start` hiện được menu |
-| **4. Viết f1 — danh sách URL** | Đọc sitemap / file txt / CSV, lọc theo `url_include` / `url_exclude` | `data/f1_urls.json` |
-| **5. Viết f2 — tải HTML** | Tải từng URL theo mục 6, bỏ qua file đã có | `data/f2_html/*.html` |
-| **6. Lấy selector** | Mở 2–3 trang mẫu, dùng Inspect tìm selector tiêu đề, nội dung, ảnh, chuyên mục, ngày → điền vào `config.json` | Phần `selectors` trong config |
-| **7. Viết f3 — trích dữ liệu** | Đọc HTML, trích theo selector, làm sạch, chuẩn hóa | `data/f3_extracted/*.json` — mở vài file kiểm tra bằng mắt |
-| **8. Viết f4 — tải ảnh** | Tải ảnh đại diện + ảnh trong nội dung, đặt tên theo slug | `data/f4_images/` + map url → file |
-| **9. Chuẩn bị WordPress** | Tạo Application Password; nếu có ACF/meta/endpoint riêng thì viết `WORDPRESS_UPDATE.md` + đoạn PHP thêm vào site | Đăng nhập REST API được |
-| **10. Viết f5 — nhập dữ liệu** | Theo mục 9: kiểm tra trùng, upload ảnh, thay URL ảnh, tạo chuyên mục, tạo bài | `data/f5_import_state.json` |
-| **11. Chạy thử** | `test_limit = 5`, status `draft` → kiểm tra 5 bài trên WordPress (nội dung, ảnh, chuyên mục, trường tùy biến) | 5 bài nháp đúng |
-| **12. Chạy thật** | `test_limit = 0`; theo dõi log; chạy lại phần lỗi | Toàn bộ dữ liệu đã nhập |
-| **13. Bàn giao / lưu trữ** | Cập nhật README, xóa dữ liệu nhạy cảm nếu đưa lên Git, thu hồi Application Password nếu không dùng nữa | Repo sạch, có hướng dẫn |
+| **1. Survey the source** | Open the source site: is there a sitemap? An API in the Network tab? Are pages rendered with JS? Check `robots.txt` and data rights | Know where to get the URL list, and whether to use `requests` or Playwright |
+| **2. Define the target** | Is the target a post, custom post type or WooCommerce product? Which categories, tags and ACF/meta are needed? | List of fields to capture (JSON schema in section 7) |
+| **3. Create the skeleton** | Create the folder per section 2: `main.py`, `start`, `common.py`, `config.example.json`, `.gitignore`, `requirements.txt`, `README.md` | `./start` shows the menu |
+| **4. Write f1: URL list** | Read the sitemap, txt file or CSV; filter with `url_include` / `url_exclude` | `data/f1_urls.json` |
+| **5. Write f2: download HTML** | Download each URL per section 6, skipping existing files | `data/f2_html/*.html` |
+| **6. Find selectors** | Open 2–3 sample pages and use Inspect to find selectors for title, content, images, category and date → add them to `config.json` | `selectors` section in the config |
+| **7. Write f3: extract data** | Read HTML, extract by selector, clean and normalize | `data/f3_extracted/*.json`; open a few files to check by eye |
+| **8. Write f4: download images** | Download the featured image and content images, named by slug | `data/f4_images/` + url → file map |
+| **9. Prepare WordPress** | Create an Application Password; if ACF, meta or custom endpoints are needed, write `WORDPRESS_UPDATE.md` + the PHP snippet to add to the site | REST API sign-in works |
+| **10. Write f5: import data** | Per section 9: check for duplicates, upload images, replace image URLs, create categories, create posts | `data/f5_import_state.json` |
+| **11. Test run** | `test_limit = 5`, status `draft` → check the 5 posts in WordPress (content, images, categories, custom fields) | 5 correct drafts |
+| **12. Full run** | `test_limit = 0`; watch the log; re-run failed items | All data imported |
+| **13. Handover / archive** | Update the README, remove sensitive data before pushing to Git, revoke the Application Password if no longer needed | Clean repo with instructions |
 
 ---
 
-## 1. Ý tưởng chung: pipeline nhiều bước, mỗi bước một file
+## 1. Core idea: a multi-step pipeline, one file per step
 
 ```
-f1 Lấy danh sách URL  →  f2 Tải HTML  →  f3 Trích dữ liệu  →  f4 Tải ảnh  →  f5 Nhập vào WordPress
-   (sitemap / txt / csv)    (lưu file .html)   (lưu .json)         (lưu file ảnh)    (REST API, có resume)
+f1 Get URL list  →  f2 Download HTML  →  f3 Extract data  →  f4 Download images  →  f5 Import to WordPress
+   (sitemap/txt/csv)   (save .html files)   (save .json)        (save image files)     (REST API, with resume)
 ```
 
-- Mỗi bước **đọc output của bước trước từ ổ đĩa** và **ghi output của mình ra ổ đĩa** → chạy lại một bước không cần làm lại các bước trước, dễ kiểm tra dữ liệu giữa chừng.
-- Bước nào không cần thì bỏ (vd. nguồn là CSV Haravan → không có f1/f2, bắt đầu từ trích dữ liệu CSV).
+- Each step **reads the previous step's output from disk** and **writes its own output to disk**, so re-running one step does not repeat earlier steps, and data is easy to inspect along the way.
+- Skip steps you do not need (for example, when the source is a Haravan CSV there is no f1/f2, so start from CSV extraction).
 
-## 2. Cấu trúc thư mục
+## 2. Folder structure
 
 ```
-<ten-nguon>-<loai>-crawl/          # vd: example-post-crawl, shop-product-crawl
-├── main.py                 # menu chọn bước, "0 = chạy tất cả"
+<source-name>-<type>-crawl/     # e.g. example-post-crawl, shop-product-crawl
+├── main.py                 # step menu, "0 = run all"
 ├── start                   # #!/bin/bash → python3 main.py (chmod +x)
-├── config.example.json     # mẫu cấu hình, KHÔNG chứa mật khẩu thật
-├── config.json             # cấu hình thật — nằm trong .gitignore
+├── config.example.json     # sample config, NO real passwords
+├── config.json             # real config, in .gitignore
 ├── .gitignore
 ├── requirements.txt
-├── README.md               # nguồn, đích, cách chạy, lưu ý quyền dữ liệu
-├── common.py               # load_config, session HTTP, logger, tiện ích dùng chung
-├── f1_<ten_buoc>.py        # mỗi bước có hàm run() -> bool
+├── README.md               # source, target, how to run, data rights notes
+├── common.py               # load_config, HTTP session, logger, shared utilities
+├── f1_<step_name>.py       # each step has a run() -> bool function
 ├── f2_crawl_html.py
 ├── f3_extract_data.py
 ├── f4_download_images.py
-├── f5_import_posts.py      # hoặc f5_import_products.py
-└── data/                   # toàn bộ output — nằm trong .gitignore
+├── f5_import_posts.py      # or f5_import_products.py
+└── data/                   # all output, in .gitignore
     ├── f1_urls.json
-    ├── f2_html/            # 1 file .html / URL
-    ├── f3_extracted/       # 1 file .json / item
+    ├── f2_html/            # 1 .html file per URL
+    ├── f3_extracted/       # 1 .json file per item
     ├── f4_images/
     ├── f5_import_state.json
     └── logs/
 ```
 
-**Quy tắc đặt tên:** file bước `fN_<việc>.py`; output của bước N luôn có tiền tố `fN_` trong `data/`. Tên thư mục tool: `<nguồn>-<post|product|quiz>-crawl`.
+**Naming rules:** step files are `fN_<task>.py`; output of step N always has the `fN_` prefix in `data/`. Tool folder name: `<source>-<post|product|quiz>-crawl`.
 
-## 3. Hợp đồng của mỗi bước
+## 3. Step contract
 
-Mỗi file `fN_*.py` có đúng một hàm công khai:
+Each `fN_*.py` file has exactly one public function:
 
 ```python
 def run() -> bool:
-    """Trả True nếu xong, False nếu lỗi nghiêm trọng (main dừng pipeline)."""
+    """Return True when finished, False on a critical error (main stops the pipeline)."""
 ```
 
-- Bước phải **chạy lại được nhiều lần** (idempotent): bỏ qua item đã có output, chỉ làm phần thiếu.
-- In tiến độ ngắn gọn: `[f2] 120/540 ok, 3 lỗi`.
-- Item lỗi ghi vào `data/logs/fN_errors.json` (url + lý do) để chạy lại riêng.
+- Steps must be **safely re-runnable** (idempotent): skip items that already have output and only do what is missing.
+- Print brief progress: `[f2] 120/540 ok, 3 errors`.
+- Failed items are written to `data/logs/fN_errors.json` (URL + reason) for a separate re-run.
 
-## 4. main.py (khung chuẩn)
+## 4. main.py (standard skeleton)
 
 ```python
 #!/usr/bin/env python3
-"""<Tên tool> — menu chạy từng bước của pipeline crawl."""
+"""<Tool name>: menu for running each step of the crawl pipeline."""
 from f1_urls import run as f1
 from f2_crawl_html import run as f2
 from f3_extract_data import run as f3
 from f4_download_images import run as f4
 from f5_import_posts import run as f5
 
-STEPS = [("Lấy danh sách URL", f1), ("Tải HTML", f2), ("Trích dữ liệu", f3),
-         ("Tải ảnh", f4), ("Nhập vào WordPress", f5)]
+STEPS = [("Get URL list", f1), ("Download HTML", f2), ("Extract data", f3),
+         ("Download images", f4), ("Import to WordPress", f5)]
 
 def main():
     while True:
-        print("\n0. Chạy tất cả")
+        print("\n0. Run all")
         for i, (name, _) in enumerate(STEPS, 1):
             print(f"{i}. {name}")
-        print("9. Thoát")
-        choice = input("Chọn: ").strip()
+        print("9. Exit")
+        choice = input("Choose: ").strip()
         if choice == "9":
             break
         if choice == "0":
             for name, step in STEPS:
                 print(f"\n--- {name} ---")
                 if not step():
-                    print(f"Dừng ở bước: {name}")
+                    print(f"Stopped at step: {name}")
                     break
         elif choice.isdigit() and 1 <= int(choice) <= len(STEPS):
             STEPS[int(choice) - 1][1]()
@@ -126,18 +124,18 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("\nĐã dừng.")
+        print("\nStopped.")
 ```
 
-## 5. Cấu hình
+## 5. Configuration
 
-`config.example.json` (commit) — `config.json` (không commit):
+`config.example.json` (committed), `config.json` (not committed):
 
 ```json
 {
   "source": {
     "sitemap_url": "https://example.com/sitemap.xml",
-    "url_include": ["/bai-viet/"],
+    "url_include": ["/blog/"],
     "url_exclude": ["/tag/", "/page/"]
   },
   "selectors": {
@@ -159,22 +157,22 @@ if __name__ == "__main__":
 }
 ```
 
-- **Selector để trong config, không viết cứng trong code** → đổi nguồn chỉ cần sửa config.
-- Cho phép đọc mật khẩu từ biến môi trường để không phải ghi vào file: `WP_APP_PASSWORD` ưu tiên hơn `config.json`.
-- `test_limit` > 0: mỗi bước chỉ xử lý N item đầu để chạy thử; 0 = chạy hết.
-- Mặc định nhập bài ở trạng thái **draft** để kiểm tra trước khi đăng.
+- **Keep selectors in the config, not in code**, so changing the source only means editing the config.
+- Allow reading the password from an environment variable to avoid writing it to a file: `WP_APP_PASSWORD` takes priority over `config.json`.
+- `test_limit` > 0: each step processes only the first N items for a test run; 0 = run everything.
+- Import posts as **draft** by default, to review before publishing.
 
-## 6. Tải trang lịch sự (f2)
+## 6. Polite page downloads (f2)
 
-- Một `requests.Session` dùng chung; `User-Agent` rõ ràng; timeout 20–30s.
-- Nghỉ ngẫu nhiên `delay_min`–`delay_max` giây giữa các request; `workers` ≤ 3.
-- Retry có backoff khi lỗi mạng / 429 / 5xx; **dừng hẳn** nếu bị chặn liên tục.
-- Phát hiện encoding (chardet) trước khi lưu, lưu UTF-8.
-- Trang render bằng JavaScript: ưu tiên tìm API JSON trong tab Network; chỉ dùng Playwright khi bắt buộc.
+- One shared `requests.Session`; a clear `User-Agent`; 20–30s timeout.
+- Random wait of `delay_min`–`delay_max` seconds between requests; `workers` ≤ 3.
+- Retry with backoff on network errors, 429 and 5xx; **stop completely** if blocked repeatedly.
+- Detect encoding (chardet) before saving, and save as UTF-8.
+- JavaScript-rendered pages: look for a JSON API in the Network tab first; use Playwright only when necessary.
 
-## 7. Trích dữ liệu (f3)
+## 7. Data extraction (f3)
 
-- Mỗi item ra 1 file JSON với schema thống nhất:
+- Each item produces one JSON file with a consistent schema:
 
 ```json
 {
@@ -183,7 +181,7 @@ if __name__ == "__main__":
   "title": "",
   "excerpt": "",
   "content_html": "",
-  "categories": ["Cha", "Con"],
+  "categories": ["Parent", "Child"],
   "tags": [],
   "featured_image": "",
   "images": [],
@@ -192,26 +190,26 @@ if __name__ == "__main__":
 }
 ```
 
-- Sản phẩm thêm: `sku`, `price`, `sale_price`, `stock`, `attributes`, `variations`.
-- **Làm sạch nội dung:** bỏ `script/style/iframe` lạ, bỏ link về site nguồn, bỏ thuộc tính inline thừa, giữ thẻ HTML cơ bản.
-- Chuẩn hóa: giá → số nguyên, ngày → ISO 8601, khoảng trắng, slug không dấu.
+- Products also have: `sku`, `price`, `sale_price`, `stock`, `attributes`, `variations`.
+- **Clean the content:** remove stray `script/style/iframe`, links back to the source site and needless inline attributes; keep basic HTML tags.
+- Normalize: prices → integers, dates → ISO 8601, whitespace, slugs without diacritics.
 
-## 8. Tải ảnh (f4)
+## 8. Image download (f4)
 
-- Tên file theo slug item + số thứ tự; bỏ qua ảnh đã tải; ghi lại map `url gốc → file`.
-- Có thể nén/đổi WebP trước khi upload để nhẹ media library.
+- File names use the item slug + a sequence number; skip images already downloaded; record an `original url → file` map.
+- Optionally compress or convert to WebP before upload to keep the media library light.
 
-## 9. Nhập vào WordPress (f5)
+## 9. Import to WordPress (f5)
 
-- Xác thực **Application Password** (Basic auth) qua REST API `/wp-json/wp/v2/...`; WooCommerce dùng `/wp-json/wc/v3/products` với consumer key/secret.
-- **Chống trùng bằng khóa tự nhiên**, không dựa vào số thứ tự: tìm theo `slug` (bài viết) hoặc `sku` (sản phẩm) trước khi tạo; có rồi thì cập nhật hoặc bỏ qua.
-- **Resume bằng danh sách đã xong**: `data/f5_import_state.json` lưu `{ "<slug>": <wp_id> }` — an toàn hơn lưu "đang ở item thứ N".
-- Upload ảnh → thay URL ảnh trong `content_html` bằng URL media mới → tạo bài/sản phẩm.
-- Chuyên mục: cache `tên → id`, tạo phân cấp cha/con nếu chưa có.
-- Trường tùy biến (ACF / post meta / endpoint riêng): mô tả trong `WORDPRESS_UPDATE.md` kèm đoạn PHP đăng ký meta / route cần thêm vào site.
-- Giới hạn song song (semaphore ~3) để không làm quá tải host.
+- Authenticate with an **Application Password** (Basic auth) through the REST API `/wp-json/wp/v2/...`; WooCommerce uses `/wp-json/wc/v3/products` with a consumer key and secret.
+- **Prevent duplicates with a natural key**, not a sequence number: look up by `slug` (posts) or `sku` (products) before creating; if found, update or skip.
+- **Resume with a finished list:** `data/f5_import_state.json` stores `{ "<slug>": <wp_id> }`, which is safer than storing "at item N".
+- Upload images → replace image URLs in `content_html` with the new media URLs → create the post or product.
+- Categories: cache `name → id`, and create the parent/child hierarchy if missing.
+- Custom fields (ACF, post meta, custom endpoints): describe them in `WORDPRESS_UPDATE.md` with the PHP snippet that registers the meta or route on the site.
+- Limit concurrency (semaphore of about 3) to avoid overloading the host.
 
-## 10. .gitignore bắt buộc
+## 10. Required .gitignore
 
 ```
 config.json
@@ -226,43 +224,43 @@ __pycache__/
 .DS_Store
 ```
 
-## 11. Bảo mật & quyền dữ liệu (đọc trước khi crawl)
+## 11. Security and data rights (read before crawling)
 
-- **Không bao giờ** commit `config.json`, mật khẩu ứng dụng, consumer key; `config.example.json` chỉ để chuỗi rỗng. Nếu lỡ commit mật khẩu: thu hồi Application Password đó trong WordPress ngay.
-- Chỉ crawl dữ liệu **có quyền dùng**: site cũ của chính khách hàng, dữ liệu xuất (CSV) của chủ shop, nguồn có giấy phép. Nguồn có API/feed thì dùng API.
-- Tôn trọng `robots.txt` và điều khoản của site nguồn; không crawl dữ liệu cá nhân.
-- Repo công khai: chỉ đưa **khung tool + config mẫu**, không kèm dữ liệu khách, không ghi tên khách hàng nếu chưa được phép.
+- **Never** commit `config.json`, application passwords or consumer keys; `config.example.json` holds empty strings only. If a password is committed by accident, revoke that Application Password in WordPress immediately.
+- Crawl only data you **have the right to use**: a client's own old site, a shop owner's exported CSV data, licensed sources. If the source has an API or feed, use it.
+- Respect `robots.txt` and the source site's terms; do not crawl personal data.
+- Public repos: include only **the tool skeleton + sample config**, with no client data and no client names without permission.
 
-## 12. README mỗi tool (mẫu ngắn)
+## 12. README for each tool (short template)
 
 ```md
-# <Tên tool>
-Nguồn: <site/CSV>  →  Đích: <WordPress post | WooCommerce product>
+# <Tool name>
+Source: <site/CSV>  →  Target: <WordPress post | WooCommerce product>
 
-## Chạy
+## Run
 pip install -r requirements.txt
-cp config.example.json config.json   # điền URL, user, app password, selector
-./start                               # chọn 0 để chạy tất cả, hoặc từng bước
+cp config.example.json config.json   # fill in URL, user, app password, selectors
+./start                               # choose 0 to run all, or run each step
 
-## Các bước
-f1 … f5 (mỗi bước làm gì, output ở đâu)
+## Steps
+f1 … f5 (what each step does, where its output goes)
 
-## Lưu ý
-Chỉ dùng cho dữ liệu bạn có quyền sử dụng.
+## Notes
+Use only with data you have the right to use.
 ```
 
-## 13. Checklist khi dựng tool mới
+## 13. New tool checklist
 
-- [ ] Đúng cấu trúc thư mục + tên file `fN_*.py`, mỗi bước có `run() -> bool`
-- [ ] Selector và nguồn nằm trong config; có `config.example.json` không chứa mật khẩu
-- [ ] `.gitignore` đủ (config.json, data/, venv/…)
-- [ ] `test_limit` chạy thử 5 item, import ở trạng thái draft
-- [ ] Chạy lại không tạo trùng (kiểm tra slug/SKU), resume bằng state file
-- [ ] Item lỗi ghi log riêng, có cách chạy lại phần lỗi
-- [ ] README ghi nguồn, đích, cách chạy, lưu ý quyền dữ liệu
+- [ ] Correct folder structure and `fN_*.py` file names; each step has `run() -> bool`
+- [ ] Selectors and source live in the config; `config.example.json` has no passwords
+- [ ] Complete `.gitignore` (config.json, data/, venv/ and so on)
+- [ ] `test_limit` run on 5 items, imported as draft
+- [ ] Re-runs create no duplicates (slug/SKU check), with resume through a state file
+- [ ] Failed items logged separately, with a way to re-run them
+- [ ] README states source, target, how to run and data rights notes
 
 ---
 
-### Prompt mẫu khi cần tool mới
+### Sample prompt for a new tool
 
-> Đọc `CRAWL-STANDARD.md`. Dựng tool `<ten>-crawl` theo đúng quy chuẩn: nguồn là `<sitemap / file CSV / danh sách URL>`, lấy các trường `<…>`, nhập vào `<WordPress post type / WooCommerce>` với chuyên mục `<…>`. Selector: `<…>`. Chạy thử `test_limit = 5` trước.
+> Read `CRAWL-STANDARD.md`. Build a `<name>-crawl` tool that follows the standard: the source is `<sitemap / CSV file / URL list>`, capture the fields `<…>`, and import into `<WordPress post type / WooCommerce>` with the category `<…>`. Selectors: `<…>`. Do a test run with `test_limit = 5` first.
